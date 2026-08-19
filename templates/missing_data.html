@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Missing Data{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h1 class="h2 fw-bold mb-1"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Missing Data</h1>
+        <p class="text-muted mb-0">Validation summary and LeetCode link issues by department</p>
+    </div>
+    <div>
+        <a href="{{ url_for('download_missing_data') }}" class="btn btn-warning btn-lg shadow-sm"
+           data-report-download
+           data-loader-success="Missing data report downloaded successfully!"
+           data-loader-filename="Missing-Data-Issues.xlsx"
+           title="Download all missing data & link issues as Excel workbook">
+            <i class="bi bi-file-earmark-excel me-2"></i>Download Missing Data (.xlsx)
+        </a>
+    </div>
+</div>
+
+{% if validation %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white fw-bold">Validation Summary</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3"><div class="validation-stat"><span class="label">Total Records</span><span class="value">{{ validation.total_records }}</span></div></div>
+            <div class="col-md-3"><div class="validation-stat"><span class="label">Valid Records</span><span class="value text-success">{{ validation.valid_records }}</span></div></div>
+            <div class="col-md-3"><div class="validation-stat"><span class="label">Missing Department</span><span class="value text-warning">{{ validation.missing_department }}</span></div></div>
+            <div class="col-md-3"><div class="validation-stat"><span class="label">Missing LeetCode Link</span><span class="value text-warning">{{ validation.missing_leetcode_link }}</span></div></div>
+            <div class="col-md-3"><div class="validation-stat"><span class="label">Invalid Links</span><span class="value text-danger">{{ validation.invalid_links }}</span></div></div>
+            <div class="col-md-3"><div class="validation-stat"><span class="label">Duplicate Register No</span><span class="value text-danger">{{ validation.duplicate_register_no }}</span></div></div>
+            <div class="col-md-3"><div class="validation-stat"><span class="label">Duplicate Username</span><span class="value text-danger">{{ validation.duplicate_username }}</span></div></div>
+            <div class="col-md-3"><div class="validation-stat"><span class="label">Missing S.No</span><span class="value">{{ validation.missing_sno }}</span></div></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<h3 class="h5 fw-bold mb-3">Missing Department Students</h3>
+<div class="card shadow-sm mb-4">
+    <div class="card-body table-responsive">
+        <table class="table table-striped table-hover table-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>S.No</th><th>Register No</th><th>Name</th><th>DEPT</th>
+                    <th>LeetCode Link</th><th>Problem Solved</th><th>Contest Rating</th><th>Contest Ranking</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in missing_dept %}
+                <tr>
+                    <td>{{ s.get('S.No', '') }}</td>
+                    <td>{{ s.get('Register No', '') }}</td>
+                    <td>{{ s.get('Name', '') }}</td>
+                    <td><span class="badge bg-danger">{{ s.get('DEPT', '') or 'BLANK' }}</span></td>
+                    <td>{{ s.get('LeetCode Link', '') }}</td>
+                    <td>{{ s.get('Problem Solved', '-') }}</td>
+                    <td>{{ s.get('Contest Rating', '-') }}</td>
+                    <td>{{ s.get('Contest Ranking', '-') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="text-center text-muted">No missing department students.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h3 class="h5 fw-bold mb-3">Link Not Working — Department-wise</h3>
+<p class="text-muted small mb-3">Students with missing, invalid, or non-working LeetCode profile links grouped by department.</p>
+
+{% if link_not_working_by_dept %}
+<div class="row g-3">
+    {% for group in link_not_working_by_dept %}
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong><i class="bi bi-building me-2"></i>{{ group.department }}</strong>
+                <span class="badge bg-danger">{{ group.count }} issue(s)</span>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>Register No</th>
+                            <th>Name</th>
+                            <th>Section</th>
+                            <th>Issue</th>
+                            <th>LeetCode Link</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in group.students %}
+                        <tr>
+                            <td>{{ item.get('S.No', '') }}</td>
+                            <td>{{ item.get('Register No', '') }}</td>
+                            <td>{{ item.get('Name', '') }}</td>
+                            <td>{{ item.get('Department', '-') }}</td>
+                            <td><span class="badge bg-warning text-dark">{{ item.get('Issue', '') }}</span></td>
+                            <td class="text-truncate" style="max-width:280px">{{ item.get('Leetcode Link', '') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-success">
+    <i class="bi bi-check-circle me-2"></i>No link issues found. All student LeetCode links look valid.
+</div>
+{% endif %}
+{% endblock %}

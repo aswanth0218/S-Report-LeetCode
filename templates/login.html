@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | S-REPORT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-page" style="background-image: url('{{ banner_url }}');">
+    <div id="pageLoader" class="page-loader d-none" aria-hidden="true" aria-live="polite">
+        <div class="page-loader-panel">
+            <div class="page-loader-spinner">
+                <div class="loader-ring"></div>
+                <div class="loader-ring"></div>
+                <div class="loader-core"><i class="bi bi-bar-chart-fill"></i></div>
+            </div>
+            <p class="page-loader-text" id="pageLoaderText">Loading<span class="loader-dots"></span></p>
+            <p class="page-loader-sub text-muted" id="pageLoaderSub">Please wait</p>
+        </div>
+    </div>
+    <div class="login-overlay"></div>
+
+    <div class="login-wrapper">
+        <div class="login-header text-center">
+            <h1 class="login-title">S-REPORT</h1>
+            <p class="login-subtitle">NCT Training and Placement Cell</p>
+            <div class="login-nct-brand">
+                <span class="nct-namma">Namma</span>
+                <span class="nct-label">NCT</span>
+                <span class="nct-heart" aria-hidden="true">♥</span>
+            </div>
+        </div>
+
+        <div class="login-card shadow-lg">
+            <div class="login-brand text-center mb-3">
+                <p class="login-card-hint mb-0">Sign in to continue</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} py-2 small">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}" class="login-form"
+                  data-loader-message="Signing in"
+                  data-loader-sub="Verifying credentials...">
+                <input type="hidden" name="next" value="{{ next_url }}">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="username">User Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control" id="username" name="username"
+                               placeholder="Enter user name" required autofocus autocomplete="username">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold" for="password">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input type="password" class="form-control" id="password" name="password"
+                               placeholder="Enter password" required autocomplete="current-password">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-login w-100 fw-semibold">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                </button>
+            </form>
+        </div>
+
+        <div class="login-marquee-wrap">
+            <div class="login-marquee">
+                <span>Developed by NCT Training and Placement Cell</span>
+                <span aria-hidden="true">Developed by NCT Training and Placement Cell</span>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/loader.js') }}"></script>
+</body>
+</html>

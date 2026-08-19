@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Upload Excel{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1 class="h2 fw-bold"><i class="bi bi-upload text-primary me-2"></i>Upload Excel</h1>
+    <p class="text-muted">Upload student details Excel file to process LeetCode performance data</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data" id="uploadForm"
+                      data-loader-message="Uploading Excel"
+                      data-loader-sub="Preparing LeetCode profile fetch...">
+                    <div class="mb-4">
+                        <label for="file" class="form-label fw-semibold">Select Excel File (.xlsx / .xls)</label>
+                        <input type="file" class="form-control form-control-lg" id="file" name="file"
+                                accept=".xlsx,.xls,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                                required>
+                        <div id="fileHelp" class="form-text">Choose a student Excel file with columns: S.No, Register No, Name, DEPT, Leetcode Link.</div>
+                        <div id="fileSelected" class="small text-success mt-1 d-none"></div>
+                        <div id="fileError" class="small text-danger mt-1 d-none"></div>
+                    </div>
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="skip_fetch" name="skip_fetch">
+                        <label class="form-check-label" for="skip_fetch">
+                            <strong>Quick upload</strong> — skip LeetCode fetch (instant upload, fetch later from Dashboard)
+                        </label>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                            <i class="bi bi-cloud-upload me-2"></i>Upload &amp; Process
+                        </button>
+                        <a href="{{ url_for('download_missing_data') }}" class="btn btn-outline-warning btn-lg"
+                           data-report-download
+                           data-loader-success="Missing data report downloaded successfully!"
+                           data-loader-filename="Missing-Data-Issues.xlsx"
+                           title="Download any missing/invalid data rows in Excel format">
+                            <i class="bi bi-file-earmark-excel me-1"></i>Download Missing Data (Excel)
+                        </a>
+                    </div>
+                </form>
+                <div class="alert alert-info mt-4 mb-0">
+                    <i class="bi bi-lightning-charge me-2"></i>
+                    <strong>High-Speed Processing:</strong> LeetCode profiles are fetched in parallel with connection pooling (up to 15 workers).
+                    Previously fetched profiles load instantly from cache.
+                </div>
+            </div>
+        </div>
+
+        {% if recent_uploads %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="card-title mb-0 fw-bold">
+                    <i class="bi bi-clock-history text-primary me-2"></i>Recent Uploads (Last 3 Data List)
+                </h5>
+                <span class="badge bg-secondary">{{ recent_uploads|length }} Recent</span>
+            </div>
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>File Name</th>
+                            <th>Total Students</th>
+                            <th>Contest Date</th>
+                            <th>Uploaded At</th>
+                            <th class="text-end" style="width: 140px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for upload_item in recent_uploads %}
+                        <tr>
+                            <td class="fw-bold">{{ loop.index }}</td>
+                            <td>
+                                <i class="bi bi-file-earmark-spreadsheet text-success me-1"></i>
+                                <span class="fw-semibold">{{ upload_item.filename }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary rounded-pill">{{ upload_item.total_records }} students</span>
+                            </td>
+                            <td>{{ upload_item.contest_date }}</td>
+                            <td class="text-muted small">{{ upload_item.uploaded_at }}</td>
+                            <td class="text-end">
+                                <a href="{{ url_for('load_upload', target_session_id=upload_item.session_id) }}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Load this uploaded dataset">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i>Load Data
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-bold">Required Excel Format</div>
+            <div class="card-body">
+                <table class="table table-sm table-bordered">
+                    <thead><tr><th>Column</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>S.No</td><td>Serial number</td></tr>
+                        <tr><td>Register No</td><td>Student register number</td></tr>
+                        <tr><td>Name</td><td>Student name</td></tr>
+                        <tr><td>DEPT</td><td>Department code</td></tr>
+                        <tr><td>Leetcode Link</td><td>Profile URL</td></tr>
+                    </tbody>
+                </table>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('sample_input') }}" class="btn btn-outline-secondary btn-sm"
+                       data-report-download
+                       data-loader-success="Sample input template downloaded successfully!"
+                       data-loader-filename="LeetCode_Students_Sample.xlsx">
+                        <i class="bi bi-download me-1"></i>Download Sample Input (.xlsx)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
+            <div class="card-header bg-white fw-bold">Processing Pipeline</div>
+            <div class="card-body">
+                <ol class="small mb-0">
+                    <li>Upload Excel</li>
+                    <li>Read &amp; Clean data</li>
+                    <li>Validate records &amp; missing fields</li>
+                    <li>Extract LeetCode usernames</li>
+                    <li>Fast Multi-thread API fetch</li>
+                    <li>Calculate department &amp; contest report</li>
+                    <li>Display interactive dashboard</li>
+                    <li>Export formatted Excel reports</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    const fileInput = document.getElementById('file');
+    const fileSelected = document.getElementById('fileSelected');
+    const fileError = document.getElementById('fileError');
+    const uploadForm = document.getElementById('uploadForm');
+    const allowed = ['.xlsx', '.xls', '.xlsm'];
+
+    function validateFile(file) {
+        if (!file) return 'Please select an Excel file.';
+        const name = file.name.toLowerCase();
+        if (!allowed.some(function (ext) { return name.endsWith(ext); })) {
+            return 'Only .xlsx or .xls files are supported.';
+        }
+        if (file.size <= 0) {
+            return 'The selected file is empty.';
+        }
+        return '';
+    }
+
+    fileInput?.addEventListener('change', function () {
+        const file = fileInput.files && fileInput.files[0];
+        const error = validateFile(file);
+        if (fileError) {
+            fileError.classList.toggle('d-none', !error);
+            fileError.textContent = error;
+        }
+        if (fileSelected) {
+            if (file && !error) {
+                fileSelected.classList.remove('d-none');
+                fileSelected.textContent = 'Selected: ' + file.name;
+            } else {
+                fileSelected.classList.add('d-none');
+                fileSelected.textContent = '';
+            }
+        }
+    });
+
+    uploadForm?.addEventListener('submit', function (event) {
+        const file = fileInput?.files && fileInput.files[0];
+        const error = validateFile(file);
+        if (error) {
+            event.preventDefault();
+            if (fileError) {
+                fileError.classList.remove('d-none');
+                fileError.textContent = error;
+            }
+            if (window.hidePageLoader) {
+                window.hidePageLoader();
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

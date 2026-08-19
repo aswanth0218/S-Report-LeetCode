@@ -1,0 +1,186 @@
+/* S-REPORT Login Page */
+
+.login-page {
+    min-height: 100vh;
+    margin: 0;
+    background-color: #000;
+    background-position: center center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+}
+
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.05) 0%,
+        rgba(0, 0, 0, 0.25) 35%,
+        rgba(0, 0, 0, 0.55) 65%,
+        rgba(0, 0, 0, 0.82) 100%
+    );
+    z-index: 0;
+    pointer-events: none;
+}
+
+.login-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    padding: 1.5rem 1.5rem 2rem;
+}
+
+.login-header {
+    margin-bottom: 1.25rem;
+    padding: 0.5rem 0.25rem;
+}
+
+.login-title {
+    font-size: 2.35rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    margin: 0 0 0.35rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8d7da 45%, #dc3545 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 2px 18px rgba(220, 53, 69, 0.35);
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
+.login-subtitle {
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.92);
+    margin: 0 0 0.85rem;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+}
+
+.login-nct-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(220, 53, 69, 0.55);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.login-nct-brand .nct-namma {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ff4d4d;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 12px rgba(255, 77, 77, 0.45);
+}
+
+.login-nct-brand .nct-label {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.14em;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+}
+
+.login-nct-brand .nct-heart {
+    color: #ff4d4d;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.login-card-hint {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6c757d;
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    padding: 1.75rem 1.5rem 1.5rem;
+    border: 1px solid rgba(220, 53, 69, 0.35);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.btn-login {
+    background: linear-gradient(135deg, #dc3545, #b02a37);
+    color: #fff;
+    border: none;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+}
+
+.btn-login:hover {
+    background: linear-gradient(135deg, #c82333, #921925);
+    color: #fff;
+}
+
+.login-marquee-wrap {
+    margin-top: 1rem;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.72);
+    border: 1px solid rgba(220, 53, 69, 0.45);
+    border-radius: 999px;
+    padding: 0.45rem 0;
+}
+
+.login-marquee {
+    display: flex;
+    width: max-content;
+    animation: login-marquee 18s linear infinite;
+    white-space: nowrap;
+}
+
+.login-marquee span {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding-right: 4rem;
+}
+
+@keyframes login-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@media (min-width: 768px) {
+    .login-wrapper {
+        max-width: 460px;
+        margin-right: 4%;
+        margin-left: auto;
+        align-self: flex-end;
+    }
+
+    .login-title {
+        font-size: 2.65rem;
+    }
+
+    .login-subtitle {
+        font-size: 0.88rem;
+    }
+
+    .login-page {
+        align-items: stretch;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 767px) {
+    .login-page {
+        background-position: center 20%;
+    }
+}

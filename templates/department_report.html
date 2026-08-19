@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Department Report{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1 class="h2 fw-bold"><i class="bi bi-building text-primary me-2"></i>Department Report</h1>
+    <p class="text-muted">CSE (A/B), AI & DS, IT (A/B), ECE, EEE — weekly contest performance</p>
+</div>
+
+{% set dept_subnav = 'summary' %}
+{% set filters = {'contest': '', 'department': selected_dept or ''} %}
+{% include 'partials/department_subnav.html' %}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end"
+              data-loader-message="Loading report"
+              data-loader-sub="Calculating department statistics...">
+            <div class="col-md-5">
+                <label class="form-label fw-semibold">Weekly Contest Date</label>
+                <select name="contest_date" class="form-select mb-2" id="deptContestSelect">
+                    <option value="">Latest Weekly Contest (default)</option>
+                    {% for c in contest_dates %}
+                    <option value="{{ c.date }}" {% if selected_contest_date == c.date %}selected{% endif %}>{{ c.label }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="contest_date_custom" class="form-control" id="deptContestCustom"
+                       value=""
+                       placeholder="Or enter date manually">
+                {% if not contest_dates %}
+                <div class="form-text text-muted">Pick a date below or use the calendar — weekly contests run on Sundays.</div>
+                {% else %}
+                <div class="form-text">{{ contest_dates|length }} weekly contest date(s) available.</div>
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Filter by Department</label>
+                <select name="department" class="form-select">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept }}" {% if selected_dept == dept %}selected{% endif %}>{{ dept | dept_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-funnel me-1"></i>Apply</button>
+                <a href="{{ url_for('export_department_report', contest_date=selected_contest_date, department=selected_dept) }}"
+                   class="btn btn-success"
+                   data-report-download
+                   data-loader-success="S-Report exported successfully!"
+                   data-loader-filename="S-Report.xlsx">
+                    <i class="bi bi-file-earmark-excel me-1"></i>Export S-Report
+                </a>
+            </div>
+        </form>
+        {% if selected_contest_date %}
+        <div class="alert alert-info mt-3 mb-0 py-2">
+            <i class="bi bi-calendar-event me-1"></i>
+            Contest: <strong>{{ selected_contest_date }}</strong>
+            {% if selected_contest_title %} — {{ selected_contest_title }}{% endif %}
+            <br><small>Columns 4,3,2,1,0 = problems solved in this weekly contest (max 4).</small>
+        </div>
+        {% endif %}
+        {% if selected_dept %}
+        <div class="alert alert-secondary mt-3 mb-0 py-2">
+            <i class="bi bi-funnel me-1"></i>
+            Showing <strong>{{ selected_dept }}</strong> only. Select <strong>All Departments</strong> to see the full Total row.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body table-responsive">
+        <table class="table table-bordered table-hover report-table text-center">
+            <thead>
+                <tr class="table-primary">
+                    <th rowspan="2">Dept</th>
+                    <th rowspan="2">Total Strength</th>
+                    <th rowspan="2">Total attended</th>
+                    <th colspan="{{ report_columns.problems|length }}">Problems Solved (Weekly Contest)</th>
+                    <th colspan="{{ report_columns.contest_ranking|length }}">Contest Global Ranking</th>
+                    <th colspan="{{ report_columns.contest_rating|length }}">Contest Rating</th>
+                    <th colspan="{{ report_columns.levels|length }}">Levels</th>
+                    <th colspan="{{ report_columns.global_ranking|length }}">Overall Global Ranking</th>
+                </tr>
+                <tr class="table-secondary">
+                    {% for label, _ in report_columns.problems %}
+                    <th>{{ label }}</th>
+                    {% endfor %}
+                    {% for label, _ in report_columns.contest_ranking %}
+                    <th>{{ label }}</th>
+                    {% endfor %}
+                    {% for label, _ in report_columns.contest_rating %}
+                    <th>{{ label }}</th>
+                    {% endfor %}
+                    {% for label, _ in report_columns.levels %}
+                    <th>{{ label }}</th>
+                    {% endfor %}
+                    {% for label, _ in report_columns.global_ranking %}
+                    <th>{{ label }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report %}
+                <tr {% if row.Dept == 'Total' %}class="table-warning fw-bold"{% elif row['Total Strength'] == 0 %}class="text-muted"{% endif %}>
+                    <td class="fw-semibold">{{ row.Dept | dept_label }}</td>
+                    <td>{{ row['Total Strength'] }}</td>
+                    <td>{{ row['Total attended'] }}</td>
+                    {% for _, key in report_columns.problems %}
+                    <td>{{ row[key] }}</td>
+                    {% endfor %}
+                    {% for _, key in report_columns.contest_ranking %}
+                    <td>{{ row[key] }}</td>
+                    {% endfor %}
+                    {% for _, key in report_columns.contest_rating %}
+                    <td>{{ row[key] }}</td>
+                    {% endfor %}
+                    {% for _, key in report_columns.levels %}
+                    <td>{{ row[key] }}</td>
+                    {% endfor %}
+                    {% for _, key in report_columns.global_ranking %}
+                    <td>{{ row[key] }}</td>
+                    {% endfor %}
+                </tr>
+                {% else %}
+                {% set total_cols = 3 + report_columns.problems|length + report_columns.contest_ranking|length + report_columns.contest_rating|length + report_columns.levels|length + report_columns.global_ranking|length %}
+                <tr><td colspan="{{ total_cols }}" class="text-muted">No report data available.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.querySelector('form')?.addEventListener('submit', function () {
+    const custom = document.getElementById('deptContestCustom');
+    const select = document.getElementById('deptContestSelect');
+    if (!select || !custom) return;
+    if (select.value) {
+        custom.value = '';
+    }
+});
+document.getElementById('deptContestSelect')?.addEventListener('change', function () {
+    const custom = document.getElementById('deptContestCustom');
+    if (this.value && custom) {
+        custom.value = '';
+    }
+});
+</script>
+{% endblock %}

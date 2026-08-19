@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}Generate Report{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1 class="h2 fw-bold"><i class="bi bi-file-earmark-spreadsheet text-primary me-2"></i>Generate Reports</h1>
+    <p class="text-muted">Download S-Report, student contest report, full LeetCode data, solved problems breakdown, and overall department summary</p>
+</div>
+
+{% if quality %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white fw-bold">
+        Quality Check
+        {% if quality.passed %}<span class="badge bg-success float-end">PASSED</span>
+        {% else %}<span class="badge bg-danger float-end">FAILED</span>{% endif %}
+    </div>
+    <div class="card-body table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Check</th><th>Expected</th><th>Actual</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for check in quality.checks %}
+                <tr>
+                    <td>{{ check.name }}</td><td>{{ check.expected }}</td><td>{{ check.actual }}</td>
+                    <td>{% if check.passed %}<span class="badge bg-success">Pass</span>{% else %}<span class="badge bg-danger">Fail</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if needs_leetcode_refetch %}
+<div class="alert alert-warning mb-4">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    Some LeetCode fields (Easy/Medium/Hard, topic breakdown, languages used, contest rating/ranking) are missing from the last fetch.
+    Go to <a href="{{ url_for('dashboard') }}" class="alert-link">Dashboard</a> and click
+    <strong>Re-fetch LeetCode Data</strong>, then return here to download the Full LeetCode Report or Solved Problems Report.
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold">S-Report (Weekly Contest)</div>
+            <div class="card-body">
+                <form method="POST" id="sReportForm"
+                      action="{{ url_for('report') }}"
+                      target="_blank"
+                      data-report-download
+                      data-loader-success="S-Report downloaded successfully!"
+                      data-loader-filename="S-Report.xlsx">
+                    <input type="hidden" name="action" value="generate">
+                    <label class="form-label fw-semibold">Weekly Contest Date</label>
+                    <select name="contest_date" class="form-select mb-2" id="contestDateSelect">
+                        <option value="" {% if not selected_contest_date %}selected{% endif %}>Latest Weekly Contest</option>
+                        {% for c in contest_dates %}
+                        <option value="{{ c.date }}" {% if selected_contest_date == c.date %}selected{% endif %}>{{ c.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <label class="form-label small text-muted mb-1">Or pick a custom date</label>
+                    <input type="date" name="contest_date_custom" class="form-control mb-2" id="contestDateCustom"
+                           value="">
+                    {% if not contest_dates %}
+                    <p class="small text-muted">Pick a Sunday date from the list or calendar.</p>
+                    {% else %}
+                    <p class="small text-muted">{{ contest_dates|length }} weekly contest(s) available.</p>
+                    {% endif %}
+                    <div class="mb-3">
+                        {% for dept in report_departments %}
+                        <span class="badge bg-primary me-1">{{ dept }}</span>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 mb-2">
+                        <i class="bi bi-download me-1"></i>Generate &amp; Download S-Report
+                    </button>
+                </form>
+                {% if report_generated %}
+                <a href="{{ url_for('download_report') }}" class="btn btn-primary w-100"
+                   data-report-download
+                   data-loader-success="S-Report downloaded successfully!"
+                   data-loader-filename="S-Report.xlsx">
+                    <i class="bi bi-file-earmark-excel me-1"></i>Download S-Report Again
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold">Full LeetCode Report</div>
+            <div class="card-body d-flex flex-column">
+                <p class="text-muted small">Every student with:</p>
+                <ul class="small">
+                    <li>Total / Easy / Medium / Hard solved</li>
+                    <li>Contest attended count, rating, ranking</li>
+                    <li>Profile overall rank, level, latest award / badge &amp; full badge details</li>
+                    <li>Latest weekly contest stats</li>
+                </ul>
+                <form method="POST" action="{{ url_for('report') }}" class="mt-auto"
+                      target="_blank"
+                      data-report-download
+                      data-loader-success="Full LeetCode report downloaded successfully!"
+                      data-loader-filename="LeetCode-Full-Report.xlsx">
+                    <input type="hidden" name="action" value="generate_full">
+                    <button type="submit" class="btn btn-info w-100 text-white">
+                        <i class="bi bi-download me-1"></i>Download Full Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold">Overall Department Report</div>
+            <div class="card-body d-flex flex-column">
+                <p class="text-muted small">Department summary (CSE, AI & DS, IT, ECE, EEE):</p>
+                <ul class="small">
+                    <li>Total &amp; average problems solved</li>
+                    <li>Easy / Medium / Hard totals</li>
+                    <li>Contest attended count</li>
+                    <li>Guardian / Knight / award counts by department</li>
+                    <li>Overall Profile sheet with Award / Badge and full badge details per student</li>
+                    <li>Average profile rank</li>
+                </ul>
+                <form method="POST" action="{{ url_for('report') }}" class="mt-auto"
+                      target="_blank"
+                      data-report-download
+                      data-loader-success="Overall department report downloaded successfully!"
+                      data-loader-filename="Overall-Department-Report.xlsx">
+                    <input type="hidden" name="action" value="generate_overall_dept">
+                    <button type="submit" class="btn btn-secondary w-100">
+                        <i class="bi bi-download me-1"></i>Download Overall Dept Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold">Weekly Contest Details Report</div>
+            <div class="card-body d-flex flex-column">
+                <p class="text-muted small">Student-wise weekly contest results and overall global rankings:</p>
+                <ul class="small">
+                    <li>S.No, Register No, Student Name, Department</li>
+                    <li>Contest Rating, Level, Contest Rank, Solved</li>
+                    <li>Overall Global Ranking &amp; Profile Rank</li>
+                    <li>Total Problems Solved, Easy, Medium, Hard</li>
+                    <li>Overall Profile sheet with profile stats &amp; badges</li>
+                </ul>
+                <form method="POST" action="{{ url_for('report') }}" class="mt-auto"
+                      target="_blank"
+                      data-report-download
+                      data-loader-success="Weekly contest details report downloaded successfully!"
+                      data-loader-filename="Weekly-Contest-Details.xlsx">
+                    <input type="hidden" name="action" value="generate_weekly_contest">
+                    <div class="row g-2 mb-2">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold small">Weekly Contest Date</label>
+                            <select name="contest_date" class="form-select form-select-sm">
+                                <option value="">Latest Weekly Contest</option>
+                                {% for c in contest_dates %}
+                                <option value="{{ c.date }}" {% if selected_contest_date == c.date %}selected{% endif %}>{{ c.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold small">Department</label>
+                            <select name="department" class="form-select form-select-sm">
+                                <option value="">All Departments</option>
+                                {% for d in departments %}
+                                <option value="{{ d }}">{{ d }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <input type="date" name="contest_date_custom" class="form-control form-control-sm mb-3"
+                           aria-label="Custom contest date">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-download me-1"></i>Download Weekly Contest Details Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold">Solved Problems Report</div>
+            <div class="card-body d-flex flex-column">
+                <p class="text-muted small">Per-student solved counts with topic breakdown:</p>
+                <ul class="small">
+                    <li>S.No, Name, Register No, Department</li>
+                    <li>Overall problems solved count</li>
+                    <li>Easy / Medium / Hard count with topics</li>
+                    <li>Language-wise solved count: Java, Python, Python3, C, C++, MySQL</li>
+                    <li>Combined languages used summary</li>
+                </ul>
+                <form method="POST" action="{{ url_for('report') }}" class="mt-auto"
+                      target="_blank"
+                      data-report-download
+                      data-loader-success="Solved problems report downloaded successfully!"
+                      data-loader-filename="Solved-Problems-Report.xlsx">
+                    <input type="hidden" name="action" value="generate_solved_problems">
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="bi bi-download me-1"></i>Download Solved Problems Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if selected_contest_date %}
+<div class="alert alert-info mt-4">
+    Last S-Report contest: <strong>{{ selected_contest_date }}</strong>
+    {% if selected_contest_title %} — {{ selected_contest_title }}{% endif %}
+    <span class="d-block small mt-1">Choose <strong>Latest Weekly Contest</strong> to auto-pick the most recent week with student attendance.</span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('contestDateSelect')?.addEventListener('change', function () {
+    const custom = document.getElementById('contestDateCustom');
+    if (this.value && custom) {
+        custom.value = '';
+    }
+});
+</script>
+{% endblock %}

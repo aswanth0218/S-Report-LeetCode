@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Student Details{% endblock %}
+
+{% block content %}
+<div class="page-header mb-3">
+    <h1 class="h2 fw-bold"><i class="bi bi-people text-primary me-2"></i>Student Details</h1>
+    <p class="text-muted mb-0">Showing {{ result_count }} student(s)</p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('students') }}" id="studentSortForm"
+              data-loader-message="Loading students"
+              data-loader-sub="Applying filters...">
+            <input type="hidden" name="sort_by" id="sort_by_table" value="{{ sort_by }}">
+            <input type="hidden" name="sort_dir" id="sort_dir_table" value="{{ sort_dir }}">
+            {% if selected_contest_date %}
+            <input type="hidden" name="contest_date" value="{{ selected_contest_date }}">
+            {% endif %}
+
+            <div class="row g-2 align-items-center mb-3">
+                <div class="col-md-4 col-lg-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="search" name="search" class="form-control"
+                               placeholder="Register number"
+                               value="{{ filters.search or '' }}"
+                               aria-label="Search by register number">
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                    {% if filters.search or filters.department %}
+                    <a href="{{ url_for('students', contest_date=selected_contest_date) }}"
+                       class="btn btn-outline-secondary btn-sm">Reset</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm report-table mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        {% for col in sort_columns %}
+                        <th>{{ col.label }}</th>
+                        {% endfor %}
+                    </tr>
+                    <tr class="sort-filter-row">
+                        {% for col in sort_columns %}
+                        <th class="p-1">
+                            {% if col.param == 'department' %}
+                            <select name="department" class="form-select form-select-sm table-filter-select"
+                                    aria-label="Filter by department">
+                                <option value="">All ({{ filter_counts.departments.all }})</option>
+                                {% for dept in report_departments %}
+                                <option value="{% if dept == 'AI&DS' %}AI_DS{% else %}{{ dept | e }}{% endif %}"
+                                        {% if filters.department == dept %}selected{% endif %}>
+                                    {{ dept | dept_label }} ({{ filter_counts.departments.get(dept, 0) }})
+                                </option>
+                                {% endfor %}
+                                <option value="Missing Department" {% if filters.department == 'Missing Department' %}selected{% endif %}>
+                                    Missing ({{ filter_counts.departments.get('Missing Department', 0) }})
+                                </option>
+                            </select>
+                            {% else %}
+                            <select class="form-select form-select-sm column-sort-select"
+                                    data-col="{{ col.param }}"
+                                    aria-label="Sort {{ col.label }}">
+                                <option value="">—</option>
+                                {% if col.kind == 'badge' %}
+                                <option value="asc" {% if sort_by == col.param and sort_dir == 'asc' %}selected{% endif %}>Low → High Badge</option>
+                                <option value="desc" {% if sort_by == col.param and sort_dir == 'desc' %}selected{% endif %}>High → Low Badge</option>
+                                {% elif col.kind == 'numeric' %}
+                                <option value="asc" {% if sort_by == col.param and sort_dir == 'asc' %}selected{% endif %}>Low → High</option>
+                                <option value="desc" {% if sort_by == col.param and sort_dir == 'desc' %}selected{% endif %}>High → Low</option>
+                                {% else %}
+                                <option value="asc" {% if sort_by == col.param and sort_dir == 'asc' %}selected{% endif %}>A → Z</option>
+                                <option value="desc" {% if sort_by == col.param and sort_dir == 'desc' %}selected{% endif %}>Z → A</option>
+                                {% endif %}
+                            </select>
+                            {% endif %}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr>
+                        <td>{{ s.get('S.No', '') }}</td>
+                        <td>{{ s.get('Register No', '') }}</td>
+                        <td>{{ s.get('Name', '') }}</td>
+                        <td>{{ s.get('Department', '') }}</td>
+                        <td>{{ s.get('LeetCode Username', '') }}</td>
+                        <td>{{ s.get('total_solved_display', '-') }}</td>
+                        <td>{{ s.get('solved_easy_display', '-') }}</td>
+                        <td>{{ s.get('solved_medium_display', '-') }}</td>
+                        <td>{{ s.get('solved_hard_display', '-') }}</td>
+                        <td>{{ s.get('contest_attended_display', '0') }}</td>
+                        <td>{{ s.get('profile_ranking_display', '-') }}</td>
+                        <td class="small badge-cell">
+                            {% set badge_items = s.get('badge_items', []) %}
+                            {% if badge_items %}
+                            <div class="badge-stack">
+                                {% for item in badge_items %}
+                                <span class="badge badge-name-chip {{ item.chip_class }}">
+                                    {{ item.name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set level = s.get('level', 'Unrated') %}
+                            <span class="badge {% if level == 'Guardian' %}bg-warning text-dark{% elif level == 'Knight' %}bg-info{% else %}bg-secondary{% endif %}">
+                                {{ level }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="13" class="text-center text-muted py-4">No students found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    const sortForm = document.getElementById('studentSortForm');
+    if (!sortForm) return;
+
+    sortForm.querySelectorAll('.column-sort-select').forEach(function (select) {
+        select.addEventListener('change', function () {
+            const direction = this.value;
+            const col = this.dataset.col;
+            if (!direction) {
+                document.getElementById('sort_by_table').value = '';
+                document.getElementById('sort_dir_table').value = 'asc';
+            } else {
+                document.getElementById('sort_by_table').value = col;
+                document.getElementById('sort_dir_table').value = direction;
+            }
+            sortForm.submit();
+        });
+    });
+
+    sortForm.querySelectorAll('.table-filter-select').forEach(function (select) {
+        select.addEventListener('change', function () {
+            sortForm.submit();
+        });
+    });
+})();
+</script>
+<style>
+.sort-filter-row th {
+    background-color: #495057 !important;
+    vertical-align: middle;
+}
+.sort-filter-row select {
+    min-width: 6.5rem;
+    font-size: 0.72rem;
+}
+.table-filter-select {
+    min-width: 8rem !important;
+}
+.badge-cell {
+    max-width: 220px;
+    white-space: normal;
+    vertical-align: middle;
+}
+.badge-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+}
+.badge-name-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.25;
+}
+</style>
+{% endblock %}

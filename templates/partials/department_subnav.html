@@ -1,0 +1,14 @@
+<ul class="nav nav-pills gap-2 mb-4 department-subnav">
+    <li class="nav-item">
+        <a class="nav-link {% if dept_subnav == 'summary' %}active{% endif %}"
+           href="{{ url_for('department_report', contest_date=selected_contest_date, department=selected_dept or '') }}">
+            <i class="bi bi-table me-1"></i>Department Summary
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if dept_subnav == 'weekly' %}active{% endif %}"
+           href="{{ url_for('weekly_contest_details', contest_date=selected_contest_date, department=selected_dept or '', contest=filters.contest or '') }}">
+            <i class="bi bi-calendar-week me-1"></i>Weekly Contest Details
+        </a>
+    </li>
+</ul>

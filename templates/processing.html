@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Processing{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4 text-center">
+    <h1 class="h2 fw-bold"><i class="bi bi-hourglass-split text-primary me-2"></i>Processing Upload</h1>
+    <p class="text-muted">Fetching LeetCode data in parallel — please wait</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-5">
+                <div id="statusIcon" class="text-center mb-4 processing-loader">
+                    <div class="page-loader-spinner mx-auto">
+                        <div class="loader-ring"></div>
+                        <div class="loader-ring"></div>
+                        <div class="loader-core"><i class="bi bi-bar-chart-fill"></i></div>
+                    </div>
+                </div>
+
+                <h4 id="stageText" class="text-center mb-3">{{ progress.get('stage', 'Starting...') }}</h4>
+
+                <div class="progress mb-3" style="height: 28px;">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                         role="progressbar"
+                         style="width: {{ progress.get('percent', 0) }}%">
+                        <span id="percentText">{{ progress.get('percent', 0) }}%</span>
+                    </div>
+                </div>
+
+                <div id="detailText" class="text-center text-muted mb-3">
+                    {% if progress.get('total') %}
+                    <span id="fetchCount">{{ progress.get('done', 0) }} / {{ progress.get('total', 0) }}</span> profiles processed
+                    {% else %}
+                    <span id="fetchCount"></span>
+                    {% endif %}
+                </div>
+
+                <div id="cacheInfo" class="alert alert-info d-none text-center">
+                    <i class="bi bi-lightning-charge me-1"></i>
+                    <span id="cacheText"></span>
+                </div>
+
+                <div id="currentUser" class="text-center small text-muted"></div>
+
+                <div id="errorBox" class="alert alert-danger d-none mt-3">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span id="errorText"></span>
+                </div>
+
+                <div id="completeBox" class="text-center d-none mt-4">
+                    <i class="bi bi-check-circle-fill text-success display-4"></i>
+                    <p class="mt-2 mb-3">Processing complete!</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h6 class="fw-bold"><i class="bi bi-lightning me-1"></i>Speed Tips</h6>
+                <ul class="small text-muted mb-0">
+                    <li>Profiles are fetched in <strong>parallel</strong> (up to 10 at a time)</li>
+                    <li>Previously fetched profiles are loaded from <strong>cache</strong> instantly</li>
+                    <li>Re-uploading the same students is much faster on second run</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/processing.js') }}"></script>
+{% endblock %}

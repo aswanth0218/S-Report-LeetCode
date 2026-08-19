@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1 class="h2 fw-bold"><i class="bi bi-speedometer2 text-primary me-2"></i>Dashboard</h1>
+    <p class="text-muted">Department-wise LeetCode problem solved overview</p>
+</div>
+
+{% if not has_data %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    No data loaded yet. <a href="{{ url_for('upload') }}" class="alert-link">Upload an Excel file</a> to get started,
+    or <a href="{{ url_for('sample_input') }}" class="alert-link" data-report-download data-loader-filename="LeetCode_Students_Sample.xlsx" data-loader-success="Sample input template downloaded successfully!">download sample input</a>.
+</div>
+{% else %}
+
+{% if needs_leetcode_refetch %}
+<div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <span><i class="bi bi-exclamation-triangle me-2"></i>
+        LeetCode profile data is incomplete. Re-fetch to fill reports with latest stats.</span>
+    <form method="POST" action="{{ url_for('refetch_leetcode') }}" class="mb-0"
+          data-loader-message="Re-fetching LeetCode data"
+          data-loader-sub="This may take a few minutes...">
+        <button type="submit" class="btn btn-warning btn-sm">
+            <i class="bi bi-arrow-repeat me-1"></i>Re-fetch LeetCode Data
+        </button>
+    </form>
+</div>
+{% endif %}
+
+{% if fetch_skipped %}
+<div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <span><i class="bi bi-info-circle me-2"></i>LeetCode data was not fetched. Upload processing can fetch it now.</span>
+    <form method="POST" action="{{ url_for('refetch_leetcode') }}" class="mb-0"
+          data-loader-message="Re-fetching LeetCode data"
+          data-loader-sub="This may take a few minutes...">
+        <button type="submit" class="btn btn-warning btn-sm">
+            <i class="bi bi-arrow-repeat me-1"></i>Fetch LeetCode Data Now
+        </button>
+    </form>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="stat-card bg-primary text-white h-100">
+            <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-value">{{ stats.total_students | default(0) }}</div>
+            <div class="stat-label">Total Students</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card dept-it text-white h-100">
+            <div class="stat-icon"><i class="bi bi-laptop"></i></div>
+            <div class="stat-value">{{ stats.it_count | default(0) }}</div>
+            <div class="stat-label">IT Students</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card dept-cse text-white h-100">
+            <div class="stat-icon"><i class="bi bi-cpu"></i></div>
+            <div class="stat-value">{{ stats.cse_count | default(0) }}</div>
+            <div class="stat-label">CSE Students</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card dept-ece text-white h-100">
+            <div class="stat-icon"><i class="bi bi-broadcast"></i></div>
+            <div class="stat-value">{{ stats.ece_count | default(0) }}</div>
+            <div class="stat-label">ECE Students</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card dept-eee text-white h-100">
+            <div class="stat-icon"><i class="bi bi-lightning-charge"></i></div>
+            <div class="stat-value">{{ stats.eee_count | default(0) }}</div>
+            <div class="stat-label">EEE Students</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card dept-aids text-white h-100">
+            <div class="stat-icon"><i class="bi bi-diagram-3"></i></div>
+            <div class="stat-value">{{ stats.ai_ds_count | default(0) }}</div>
+            <div class="stat-label">AI & DS Students</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card bg-danger text-white h-100">
+            <div class="stat-icon"><i class="bi bi-exclamation-diamond"></i></div>
+            <div class="stat-value">{{ stats.missing_department_count | default(0) }}</div>
+            <div class="stat-label">Missing Department</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span>Department Problem-Solved Growth</span>
+                {% if stats.top_growth_dept %}
+                <span class="badge bg-success">Leading: {{ stats.top_growth_dept }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">Average lifetime problems solved per student — higher bar = stronger solving growth.</p>
+                <canvas id="deptSolvedGrowthChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span>High Problem Solved Departments</span>
+                {% if stats.top_solved_dept %}
+                <span class="badge bg-danger">Top: {{ stats.top_solved_dept }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                <p class="small text-muted mb-2 text-center">Total problems solved share by department.</p>
+                <canvas id="deptSolvedTotalChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+{% if has_data %}
+<script>
+    window.dashboardStats = {{ stats | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+{% block title %}Weekly Contest Details{% endblock %}
+
+{% block content %}
+<div class="page-header mb-3">
+    <h1 class="h2 fw-bold"><i class="bi bi-calendar-week text-primary me-2"></i>Weekly Contest Details</h1>
+    <p class="text-muted mb-0">Student-wise weekly contest results and overall LeetCode global rankings</p>
+</div>
+
+{% set dept_subnav = 'weekly' %}
+{% include 'partials/department_subnav.html' %}
+
+<!-- Top Controls & Filter Card -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end" id="weeklySearchForm"
+              data-loader-message="Loading contest details"
+              data-loader-sub="Fetching weekly contest data...">
+            
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar3 me-1"></i>Contest Date</label>
+                <select name="contest_date" class="form-select" id="weeklyContestSelect">
+                    <option value="">Latest Weekly Contest (default)</option>
+                    {% for c in contest_dates %}
+                    <option value="{{ c.date }}" {% if selected_contest_date == c.date %}selected{% endif %}>{{ c.label }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="contest_date_custom" class="form-control mt-1" id="weeklyContestCustom"
+                       value="{{ request.args.get('contest_date_custom', '') }}"
+                       aria-label="Enter contest date manually">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i>Department</label>
+                <select name="department" class="form-select" id="topDeptSelect">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                    <option value="{% if d == 'AI&DS' %}AI_DS{% else %}{{ d }}{% endif %}"
+                            {% if filters.department == d or (d == 'AI&DS' and filters.department in ('AI&DS', 'AIDS', 'AI_DS')) %}selected{% endif %}>
+                        {{ d }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-globe me-1"></i>Global Ranking</label>
+                <select name="global_rank" class="form-select" id="topGlobalRankSelect">
+                    <option value="">All</option>
+                    {% for opt in filter_options.global_rank %}
+                    <option value="{{ opt }}" {% if filters.global_rank == opt %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold"><i class="bi bi-search me-1"></i>Search</label>
+                <input type="search" name="search" class="form-control"
+                       value="{{ filters.search or '' }}" placeholder="Student Name / Register No" aria-label="Search student">
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-filter me-1"></i>Apply</button>
+                <a href="{{ url_for('weekly_contest_details', contest_date=selected_contest_date) }}" class="btn btn-outline-secondary" title="Reset all filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+            </div>
+
+            <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2 pt-2 border-top">
+                <div class="text-muted small">
+                    {% if selected_contest_date %}
+                    <i class="bi bi-calendar-event me-1"></i>Contest: <strong>{{ selected_contest_date }}</strong>
+                    {% if selected_contest_title %} — {{ selected_contest_title }}{% endif %}
+                    <span class="ms-2">| Showing <strong>{{ result_count }}</strong> student(s)</span>
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('export_weekly_contest_details', contest_date=selected_contest_date, contest_date_custom=request.args.get('contest_date_custom', ''), department=filters.department or '', search=filters.search or '', s_no=filters.s_no or '', register_no=filters.register_no or '', name=filters.name or '', link_status=filters.link_status or '', contest=filters.contest or '', problems_solved=filters.problems_solved or '', contest_rating=filters.contest_rating or '', contest_rank=filters.contest_rank or '', global_rank=filters.global_rank or '', sort_by=sort_by or '', sort_dir=sort_dir or '') }}"
+                   class="btn btn-success btn-sm"
+                   data-report-download
+                   data-loader-success="Weekly contest details downloaded successfully!"
+                   data-loader-filename="Weekly-Contest-Details.xlsx">
+                    <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Overall Global Ranking Summary & Department Comparison Cards -->
+<div class="row g-3 mb-4">
+    <!-- Overall Ranking Summary for Selected Department -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+                <span class="fw-semibold"><i class="bi bi-pie-chart-fill me-1"></i>Overall Ranking Summary</span>
+                <span class="badge bg-light text-primary">{{ filters.department or 'All Departments' }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ranking Category</th>
+                                <th class="text-end">Student Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge bg-success me-1">&lt; 20K</span> Below 20,000</td>
+                                <td class="text-end fw-bold text-success">{{ ranking_summary.below_20k if ranking_summary else 0 }}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary me-1">20K-100K</span> 20,000 – 100,000</td>
+                                <td class="text-end fw-bold text-primary">{{ ranking_summary.from_20k_to_100k if ranking_summary else 0 }}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-warning text-dark me-1">&gt; 100K</span> Above 100,000</td>
+                                <td class="text-end fw-bold text-warning">{{ ranking_summary.above_100k if ranking_summary else 0 }}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-secondary me-1">N/A</span> Ranking Not Available</td>
+                                <td class="text-end fw-bold text-muted">{{ ranking_summary.not_available if ranking_summary else 0 }}</td>
+                            </tr>
+                            <tr class="table-light fw-bold">
+                                <td>Total Strength</td>
+                                <td class="text-end">{{ ranking_summary.total if ranking_summary else 0 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department-wise Overall Global Ranking Comparison -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+                <span class="fw-semibold"><i class="bi bi-bar-chart-steps me-1"></i>Department-wise Overall Global Ranking</span>
+                <span class="badge bg-secondary">Department Summary</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped table-hover text-center mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-start">Department</th>
+                                <th>Below 20K</th>
+                                <th>20K–100K</th>
+                                <th>Above 100K</th>
+                                <th>Not Available</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in dept_comparison %}
+                            <tr {% if row.department == 'Total' %}class="table-dark fw-bold"{% elif filters.department == row.department %}class="table-info fw-bold"{% endif %}>
+                                <td class="text-start fw-semibold">{{ row.department }}</td>
+                                <td class="text-success fw-bold">{{ row.below_20k }}</td>
+                                <td class="text-primary fw-bold">{{ row.from_20k_to_100k }}</td>
+                                <td class="text-warning fw-bold">{{ row.above_100k }}</td>
+                                <td class="text-muted">{{ row.not_available }}</td>
+                                <td class="fw-bold">{{ row.total }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Table Card -->
+<div class="card shadow-sm">
+    <div class="card-body table-responsive">
+        <form method="GET" id="weeklyTableFilterForm">
+            <input type="hidden" name="sort_by" id="weekly_sort_by" value="{{ sort_by or '' }}">
+            <input type="hidden" name="sort_dir" id="weekly_sort_dir" value="{{ sort_dir or 'asc' }}">
+            {% if selected_contest_date %}
+            <input type="hidden" name="contest_date" value="{{ selected_contest_date }}">
+            {% endif %}
+            {% if request.args.get('contest_date_custom') %}
+            <input type="hidden" name="contest_date_custom" value="{{ request.args.get('contest_date_custom') }}">
+            {% endif %}
+            {% if filters.search %}
+            <input type="hidden" name="search" value="{{ filters.search }}">
+            {% endif %}
+
+            <table class="table table-striped table-hover table-sm report-table mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>S.No</th>
+                        <th>Register No</th>
+                        <th>Student Name</th>
+                        <th>Department</th>
+                        <th class="p-1" style="min-width: 10rem;">LeetCode Link Status</th>
+                        <th class="p-1" style="min-width: 8rem;">Contest</th>
+                        <th class="p-1" style="min-width: 8rem;">Contest Rating</th>
+                        <th class="p-1" style="min-width: 7rem;">Level</th>
+                        <th class="p-1" style="min-width: 8rem;">Contest Rank</th>
+                        <th class="p-1" style="min-width: 7rem;">Solved</th>
+                        <th class="p-1" style="min-width: 10.5rem;" title="Overall/best Global Ranking from LeetCode profile/contest data">Overall Global Ranking</th>
+                    </tr>
+                    <tr class="weekly-filter-row">
+                        <th class="p-1">
+                            <input type="search" name="s_no" class="form-control form-control-sm weekly-text-filter"
+                                   value="{{ filters.s_no or '' }}" placeholder="Filter" aria-label="Filter S.No">
+                        </th>
+                        <th class="p-1">
+                            <input type="search" name="register_no" class="form-control form-control-sm weekly-text-filter"
+                                   value="{{ filters.register_no or '' }}" placeholder="Filter" aria-label="Filter register number">
+                        </th>
+                        <th class="p-1">
+                            <input type="search" name="name" class="form-control form-control-sm weekly-text-filter"
+                                   value="{{ filters.name or '' }}" placeholder="Filter" aria-label="Filter name">
+                        </th>
+                        <th class="p-1">
+                            <select name="department" class="form-select form-select-sm weekly-table-filter"
+                                    aria-label="Filter by department">
+                                <option value="">All ({{ filter_counts.department.all }})</option>
+                                {% for dept in filter_options.departments %}
+                                <option value="{% if dept == 'AI&DS' %}AI_DS{% else %}{{ dept | e }}{% endif %}"
+                                        {% if filters.department == dept %}selected{% endif %}>
+                                    {{ dept | dept_label }} ({{ filter_counts.department.get(dept, 0) }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </th>
+                        <th class="p-1">
+                            <select name="link_status" class="form-select form-select-sm weekly-table-filter"
+                                    aria-label="Filter by LeetCode profile link status">
+                                <option value="">All ({{ filter_counts.link_status.all }})</option>
+                                {% for label in filter_options.link_status %}
+                                <option value="{{ label }}" {% if filters.link_status == label %}selected{% endif %}>
+                                    {{ label }} ({{ filter_counts.link_status.get(label, 0) }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </th>
+                        <th class="p-1">
+                            <select name="contest" class="form-select form-select-sm weekly-table-filter"
+                                    aria-label="Filter by contest attendance">
+                                <option value="">All ({{ filter_counts.contest.all }})</option>
+                                <option value="attended" {% if filters.contest == 'attended' %}selected{% endif %}>Attended ({{ filter_counts.contest.attended }})</option>
+                                <option value="not_attended" {% if filters.contest == 'not_attended' %}selected{% endif %}>Not Attended ({{ filter_counts.contest.not_attended }})</option>
+                            </select>
+                        </th>
+                        <th class="p-1">
+                            <select name="contest_rating" class="form-select form-select-sm weekly-table-filter"
+                                    aria-label="Filter by contest rating">
+                                <option value="">All ({{ filter_counts.contest_rating.all }})</option>
+                                {% for label in filter_options.contest_rating %}
+                                <option value="{{ label }}" {% if filters.contest_rating == label %}selected{% endif %}>
+                                    {{ label }} ({{ filter_counts.contest_rating.get(label, 0) }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </th>
+                        <th class="p-1"></th>
+                        <th class="p-1">
+                            <select name="contest_rank" class="form-select form-select-sm weekly-table-filter"
+                                    aria-label="Filter by Contest Rank">
+                                <option value="">All ({{ filter_counts.contest_rank.all }})</option>
+                                {% for label in filter_options.contest_rank %}
+                                <option value="{{ label }}" {% if filters.contest_rank == label %}selected{% endif %}>
+                                    {{ label }} ({{ filter_counts.contest_rank.get(label, 0) }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </th>
+                        <th class="p-1">
+                            <select name="problems_solved" class="form-select form-select-sm weekly-table-filter"
+                                    aria-label="Filter by problems solved">
+                                <option value="">All ({{ filter_counts.problems_solved.all }})</option>
+                                {% for value in filter_options.problems_solved %}
+                                <option value="{{ value }}" {% if filters.problems_solved == value %}selected{% endif %}>
+                                    {{ value }} ({{ filter_counts.problems_solved.get(value, 0) }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </th>
+                        <th class="p-1">
+                            <div class="d-flex gap-1">
+                                <select name="global_rank" class="form-select form-select-sm weekly-table-filter"
+                                        aria-label="Filter by Overall Global Ranking">
+                                    <option value="">All ({{ filter_counts.global_rank.all if filter_counts.global_rank else filter_counts.contest_rank.all }})</option>
+                                    {% for label in filter_options.global_rank %}
+                                    <option value="{{ label }}" {% if filters.global_rank == label %}selected{% endif %}>
+                                        {{ label }} ({{ filter_counts.global_rank.get(label, 0) if filter_counts.global_rank else 0 }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <select class="form-select form-select-sm weekly-global-rank-sort"
+                                        style="max-width: 4.8rem;"
+                                        aria-label="Sort by Overall Global Ranking">
+                                    <option value="">Sort</option>
+                                    <option value="asc" {% if sort_by in ('global_ranking', 'overall_contest_ranking', 'overall_global_ranking', 'global_rank', 'overall_global_rank') and sort_dir == 'asc' %}selected{% endif %}>↑ Low</option>
+                                    <option value="desc" {% if sort_by in ('global_ranking', 'overall_contest_ranking', 'overall_global_ranking', 'global_rank', 'overall_global_rank') and sort_dir == 'desc' %}selected{% endif %}>↓ High</option>
+                                </select>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in students %}
+                    <tr>
+                        <td>{{ row['S.No'] }}</td>
+                        <td>{{ row['Register No'] }}</td>
+                        <td>{{ row['Student Name'] or row['Name'] }}</td>
+                        <td>{{ row['Department'] }}</td>
+                        <td>
+                            {% set link_status = row['Leetcode profile Link Status'] %}
+                            {% if link_status == 'Success' %}
+                            <span class="badge bg-success">{{ link_status }}</span>
+                            {% elif link_status in ('Missing LeetCode Link', 'Invalid LeetCode Link', 'Profile Not Found', 'Profile Fetch Failed') %}
+                            <span class="badge bg-danger">{{ link_status }}</span>
+                            {% elif link_status == 'Not Fetched' %}
+                            <span class="badge bg-warning text-dark">{{ link_status }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ link_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row['Contest'] == 'Attended' %}
+                            <span class="badge bg-success">Attended</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Not Attended</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row['Contest Rating'] }}</td>
+                        <td>
+                            {% if row['Level'] == 'Guardian' %}
+                            <span class="badge bg-warning text-dark">Guardian</span>
+                            {% elif row['Level'] == 'Knight' %}
+                            <span class="badge bg-primary">Knight</span>
+                            {% else %}
+                            <span class="badge bg-light text-dark border">{{ row['Level'] or 'Unrated' }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row['Contest Rank'] }}</td>
+                        <td>{{ row['Solved'] or row['Problems Solved (out of 4)'] }}</td>
+                        <td class="fw-bold">{{ row['Overall Global Ranking'] or row['Global Ranking'] or 'N/A' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="11" class="text-center text-muted py-4">No students found for this contest and filter.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('weeklyContestSelect')?.addEventListener('change', function () {
+    const custom = document.getElementById('weeklyContestCustom');
+    if (this.value && custom) custom.value = '';
+});
+
+const weeklyFilterForm = document.getElementById('weeklyTableFilterForm');
+
+document.querySelectorAll('.weekly-table-filter').forEach(function (select) {
+    select.addEventListener('change', function () {
+        weeklyFilterForm.submit();
+    });
+});
+
+document.querySelectorAll('.weekly-global-rank-sort').forEach(function (select) {
+    select.addEventListener('change', function () {
+        const direction = this.value;
+        const sortByInput = document.getElementById('weekly_sort_by');
+        const sortDirInput = document.getElementById('weekly_sort_dir');
+        if (!direction) {
+            sortByInput.value = '';
+            sortDirInput.value = 'asc';
+        } else {
+            sortByInput.value = 'global_ranking';
+            sortDirInput.value = direction;
+        }
+        weeklyFilterForm.submit();
+    });
+});
+
+document.querySelectorAll('.weekly-text-filter').forEach(function (input) {
+    input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            weeklyFilterForm.submit();
+        }
+    });
+    input.addEventListener('search', function () {
+        if (this.value === '') {
+            weeklyFilterForm.submit();
+        }
+    });
+});
+</script>
+<style>
+.weekly-filter-row th {
+    background-color: #495057 !important;
+    vertical-align: middle;
+}
+.weekly-filter-row select,
+.weekly-filter-row input {
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}

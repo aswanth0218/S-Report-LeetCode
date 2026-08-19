@@ -1,0 +1,497 @@
+/* S-REPORT Styles */
+
+:root {
+    --primary-color: #0d6efd;
+    --guardian-color: #e6a817;
+    --knight-color: #17a2b8;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f4f6f9;
+}
+
+main {
+    flex: 1;
+}
+
+.page-header h1 {
+    color: #1a1a2e;
+}
+
+.stat-card {
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 1.5rem;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+}
+
+.level-guardian {
+    background: linear-gradient(135deg, #e6a817, #f0c040);
+}
+
+.level-knight {
+    background: linear-gradient(135deg, #17a2b8, #20c997);
+}
+
+.dept-it {
+    background: linear-gradient(135deg, #198754, #20c997);
+}
+
+.dept-cse {
+    background: linear-gradient(135deg, #0d6efd, #4dabf7);
+}
+
+.dept-ece {
+    background: linear-gradient(135deg, #6f42c1, #9775fa);
+}
+
+.dept-eee {
+    background: linear-gradient(135deg, #fd7e14, #ffc107);
+}
+
+.dept-aids {
+    background: linear-gradient(135deg, #0dcaf0, #20c997);
+}
+
+.report-table {
+    font-size: 0.85rem;
+}
+
+.report-table th {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.report-table td {
+    vertical-align: middle;
+}
+
+.validation-stat {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.validation-stat .label {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.validation-stat .value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+}
+
+.card-header {
+    border-bottom: 1px solid #eee;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.navbar-brand {
+    font-size: 1.3rem;
+    letter-spacing: 0.5px;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+.table-responsive {
+    border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* Top page progress indicator */
+.top-page-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3.5px;
+    width: 0;
+    background: linear-gradient(90deg, #0d6efd, #20c997, #ffc107, #0d6efd);
+    background-size: 200% 100%;
+    z-index: 10050;
+    transition: width 0.3s ease, opacity 0.4s ease;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 0 10px rgba(13, 110, 253, 0.6);
+}
+
+.top-page-progress.active {
+    opacity: 1;
+    animation: sreport-gradient-slide 1.5s linear infinite;
+}
+
+@keyframes sreport-gradient-slide {
+    0% { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+}
+
+/* Page loading overlay */
+body.page-loading {
+    overflow: hidden;
+}
+
+.page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(244, 246, 249, 0.92);
+    backdrop-filter: blur(6px);
+    transition: opacity 0.25s ease-in-out;
+}
+
+.page-loader-panel {
+    text-align: center;
+    padding: 2.2rem 2.8rem;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 15px 50px rgba(13, 110, 253, 0.18), 0 2px 6px rgba(0, 0, 0, 0.04);
+    min-width: 280px;
+    border: 1px solid rgba(13, 110, 253, 0.08);
+}
+
+.page-loader-spinner {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 1.25rem;
+}
+
+.loader-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid transparent;
+    border-top-color: #0d6efd;
+    animation: sreport-spin 1.1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.loader-ring:nth-child(2) {
+    inset: 10px;
+    border-top-color: #20c997;
+    animation-duration: 0.85s;
+    animation-direction: reverse;
+}
+
+.loader-core {
+    position: absolute;
+    inset: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0d6efd, #4dabf7);
+    border-radius: 50%;
+    color: #fff;
+    font-size: 1.35rem;
+    animation: sreport-pulse 1.5s ease-in-out infinite;
+}
+
+.page-loader-text {
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 0.35rem;
+}
+
+.page-loader-sub {
+    margin-bottom: 0;
+    font-size: 0.85rem;
+}
+
+.loader-dots::after {
+    content: '';
+    animation: sreport-dots 1.4s steps(4, end) infinite;
+}
+
+@keyframes sreport-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes sreport-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.92); opacity: 0.85; }
+}
+
+@keyframes sreport-dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+}
+
+.processing-loader .loader-ring {
+    border-width: 5px;
+}
+
+.processing-loader .page-loader-spinner {
+    width: 100px;
+    height: 100px;
+}
+
+/* Excel Download Animation Modal Overlay */
+.excel-download-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: excel-fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.excel-download-modal {
+    position: relative;
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 2.2rem 2rem 2rem;
+    text-align: center;
+    box-shadow: 0 20px 60px -10px rgba(16, 124, 65, 0.32), 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(16, 124, 65, 0.18);
+    animation: excel-modal-pop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+.excel-anim-wrapper {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    margin: 0 auto 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.excel-pulse-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid rgba(16, 124, 65, 0.5);
+    animation: excel-pulse-wave 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+.excel-pulse-ring.ring-2 {
+    animation-delay: 0.6s;
+    border-color: rgba(32, 201, 151, 0.45);
+}
+
+.excel-icon-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #107c41 0%, #198754 50%, #20c997 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(16, 124, 65, 0.35);
+    position: relative;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.excel-sheet-icon {
+    font-size: 2.3rem;
+    animation: excel-icon-float 2s ease-in-out infinite;
+}
+
+.excel-success-icon {
+    font-size: 2.7rem;
+    color: #ffffff;
+}
+
+.excel-arrow-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #107c41;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: bold;
+    border: 2px solid #e8f5e9;
+    animation: excel-arrow-bounce 1.1s ease-in-out infinite;
+}
+
+.excel-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.35rem;
+    transition: color 0.3s;
+}
+
+.excel-modal-sub {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.excel-filename-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e8f5e9;
+    color: #107c41;
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(16, 124, 65, 0.2);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.excel-progress-track {
+    width: 100%;
+    height: 7px;
+    background: #f1f5f9;
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.excel-progress-bar {
+    height: 100%;
+    width: 15%;
+    background: linear-gradient(90deg, #107c41, #20c997, #198754, #107c41);
+    background-size: 200% 100%;
+    border-radius: 999px;
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: excel-progress-shimmer 1.5s linear infinite;
+}
+
+/* Success transition state */
+.excel-download-modal.is-success {
+    border-color: rgba(25, 135, 84, 0.35);
+    box-shadow: 0 20px 60px -10px rgba(25, 135, 84, 0.35);
+}
+
+.excel-download-modal.is-success .excel-icon-circle {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    transform: scale(1.08);
+}
+
+.excel-download-modal.is-success .excel-sheet-icon {
+    display: none;
+}
+
+.excel-download-modal.is-success .excel-success-icon {
+    display: block !important;
+    animation: excel-success-check 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.excel-download-modal.is-success .excel-arrow-badge {
+    display: none !important;
+}
+
+.excel-download-modal.is-success .excel-progress-bar {
+    width: 100% !important;
+    background: #198754;
+    animation: none;
+}
+
+.excel-download-modal.is-success .excel-pulse-ring {
+    opacity: 0;
+    animation: none;
+}
+
+/* Keyframes */
+@keyframes excel-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes excel-modal-pop {
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes excel-pulse-wave {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+@keyframes excel-icon-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+@keyframes excel-arrow-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
+
+@keyframes excel-progress-shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+@keyframes excel-success-check {
+    0% { transform: scale(0.3); opacity: 0; }
+    60% { transform: scale(1.18); opacity: 1; }
+    100% { transform: scale(1); }
+}
